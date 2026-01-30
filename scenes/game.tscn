@@ -1,0 +1,8 @@
+[gd_scene format=3 uid="uid://bs52ypljo5dxd"]
+
+[ext_resource type="Script" uid="uid://dsv3tvrpargpf" path="res://godot-gan-cube/cube_connector.gd" id="1_uwrxv"]
+
+[node name="Node2D" type="Node2D" unique_id=1330689774]
+
+[node name="CubeConnector" type="Node" parent="." unique_id=1488219249]
+script = ExtResource("1_uwrxv")
