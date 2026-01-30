@@ -1,0 +1,26 @@
+class_name GanHandler
+extends Node
+
+var cube_state : CubeState = CubeState.new()
+
+func _get_bit_word(bits : String, start_bit : int, bit_length : int, little_endian : bool = false) -> int:
+	if bit_length <= 8:
+		return bits.substr(start_bit, bit_length).bin_to_int()
+	elif bit_length == 16 or bit_length == 32:
+		var buf = PackedByteArray()
+		for i in range(0, bit_length / 8):
+			buf.append(bits.substr(8 * i + start_bit, 8).bin_to_int())
+		if bit_length == 16:
+			if not little_endian:
+				buf.reverse()
+			return buf.decode_u16(0)
+		else:
+			if not little_endian:
+				buf.reverse()
+			return buf.decode_u32(0)
+	else:
+		printerr("Unsupported bit length")
+		return -1
+
+func handle_state(state_msg : String):
+	pass

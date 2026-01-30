@@ -1,31 +1,35 @@
 class_name CubeConnector
 extends Node
 
+signal on_cube_updated(cube_state : CubeState)
+
+var encrypter : CubeEncrypter
 var bluetooth_manager: BluetoothManager
-var cube_device : BleDevice
+var cube_device : BleDevice = null
+var gan_handler : GanHandler
 
 func _ready() -> void:
+	gan_handler = GanGen4Handler.new()
+	add_child(gan_handler)
+	encrypter = GanCubeEncrypter.new()
+	add_child(encrypter)
 	bluetooth_manager = BluetoothManager.new()
 	add_child(bluetooth_manager)
-	
+
 	bluetooth_manager.adapter_initialized.connect(_on_initialized)
 	bluetooth_manager.device_discovered.connect(_on_device_found)
 	bluetooth_manager.scan_stopped.connect(_on_scan_done)
 	
 	bluetooth_manager.initialize()
-
-func _input(event: InputEvent) -> void:
-	if event.is_action("ui_accept"):
-		print("Scanning again..")
-		bluetooth_manager.start_scan(30.0)
+	
 
 func _on_initialized(success: bool, error: String):
 	if success:
-		bluetooth_manager.start_scan(30.0)
+		bluetooth_manager.start_scan(10.0)
 
 func _on_device_found(info: Dictionary):
 	var name = info.get("name", "")
-	if name and "GAN" in name:
+	if not cube_device and name and "GAN" in name:
 		print("Cube found")
 		print(info)
 		bluetooth_manager.stop_scan()
@@ -44,12 +48,40 @@ func connect_to_target(address: String):
 		cube_device.connect_async()
 	else:
 		print("connect device call failed?")
+		
 func _on_connected():
 	print("Device connected!")
-	print(cube_device)
+	
+	var key : Array = GanTypes.GAN_ENCRYPTION_KEYS[0]["key"]
+	var iv : Array = GanTypes.GAN_ENCRYPTION_KEYS[0]["iv"]
+	encrypter.init(key, iv, cube_device.get_address())
+	
+	cube_device.services_discovered.connect(_on_services_discovered)
+	
+	cube_device.characteristic_notified.connect(_on_notified)
+	
+	cube_device.discover_services()
+
+func _on_services_discovered(services : Array):
+	print("Discovered ", services.size(), " services!")
+	cube_device.subscribe_characteristic(GanTypes.GAN_GEN4_SERVICE, GanTypes.GAN_GEN4_STATE_CHARACTERISTIC)
+
+func _on_notified(id : String, data : PackedByteArray):
+	if id == GanTypes.GAN_GEN4_STATE_CHARACTERISTIC:
+		var raw_state = encrypter.decrypt(data)
+		var state_msg = packed_byte_array_to_bits(raw_state)
+		gan_handler.handle_state(state_msg)
+		on_cube_updated.emit(gan_handler.cube_state)
 	
 func _on_connection_failed():
 	print("Connection failed!")
 	cube_device.disconnect()
 	cube_device = null 
-	
+
+func packed_byte_array_to_bits(bytes_array: PackedByteArray) -> String:
+	var bits: String = ""
+	for byte in bytes_array:
+		var new_byte : int = (byte + 0x100)
+		var chunk : String = String.num_int64(new_byte, 2).substr(1)
+		bits += chunk
+	return bits
