@@ -1,5 +1,12 @@
 class_name GanTypes
 
+enum CommandType {
+	REQUEST_FACELETS,
+	REQUEST_HARDWARE,
+	REQUEST_BATTERY,
+	REQUEST_RESET
+}
+
 static var SOLVED_STATE = ["U", "U", "U", "U", "U", "U", "U", "U", "U", "R", "R", "R", "R", "R", "R", "R", "R", "R", "F", "F", "F", "F", "F", "F", "F", "F", "F", "D", "D", "D", "D", "D", "D", "D", "D", "D", "L", "L", "L", "L", "L", "L", "L", "L", "L", "B", "B", "B", "B", "B", "B", "B", "B", "B"]
 
 # GAN Gen2 protocol BLE service

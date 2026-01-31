@@ -69,6 +69,9 @@ func _on_connected():
 func _on_services_discovered(services : Array):
 	print("Discovered ", services.size(), " services!")
 	cube_device.subscribe_characteristic(GanTypes.GAN_GEN4_SERVICE, GanTypes.GAN_GEN4_STATE_CHARACTERISTIC)
+	
+	gan_handler.send_command_message(GanTypes.CommandType.REQUEST_HARDWARE, cube_device, encrypter)
+	gan_handler.send_command_message(GanTypes.CommandType.REQUEST_BATTERY, cube_device, encrypter)
 
 func _on_notified(id : String, data : PackedByteArray):
 	if id == GanTypes.GAN_GEN4_STATE_CHARACTERISTIC:
@@ -86,6 +89,11 @@ func _on_connection_failed():
 	print("Connection failed!")
 	cube_device.disconnect()
 	cube_device = null 
+
+func disconnect_cube():
+	if cube_device:
+		print("Disconnecting cube")
+		cube_device.disconnect()
 
 func packed_byte_array_to_bits(bytes_array: PackedByteArray) -> String:
 	var bits: String = ""

@@ -79,7 +79,28 @@ func handle_state(state_msg : String, connector : CubeConnector):
 	
 	# HARDWARE EVENT
 	elif event_type >= 0xFA and event_type <= 0xFE:
-		print("Got HARDWARE EVENT TODO")
+		# PRODUCT DATE
+		if event_type == 0xFA:
+			var year = _get_bit_word(state_msg, 24, 16, true)
+			var month = _get_bit_word(state_msg, 40, 8)
+			var day = _get_bit_word(state_msg, 48, 8)
+			cube_state.product_date = str(year).pad_zeros(4) + "-" + str(month).pad_zeros(2) + "-" + str(day).pad_zeros(2)
+		# HARDWARE NAME
+		elif event_type == 0xFC:
+			var hardware_name = ""
+			for i in range(data_length - 1):
+				hardware_name += char(_get_bit_word(state_msg, i * 8 + 24, 8))
+			cube_state.hardware_name = hardware_name
+		# SOFTWARE VERSION
+		elif event_type == 0xFD:
+			var minor = _get_bit_word(state_msg, 24, 4)
+			var major = _get_bit_word(state_msg, 28, 4)
+			cube_state.software_version = str(major) + "." + str(minor)
+		# HARDWARE VERSION
+		elif event_type == 0xFE:
+			var minor = _get_bit_word(state_msg, 24, 4)
+			var major = _get_bit_word(state_msg, 28, 4)
+			cube_state.hardware_version = str(major) + "." + str(minor)
 	
 	# GYRO
 	elif event_type == 0xEC:
@@ -117,14 +138,12 @@ func handle_state(state_msg : String, connector : CubeConnector):
 	
 	# BATTERY
 	elif event_type == 0xEF:
-		print("Got BATTERY TODO")
 		var battery = _get_bit_word(state_msg, 8 + data_length * 8, 8)
 		cube_state.battery_level = battery
 	
 	# DISCONNECT
 	elif event_type == 0xEA:
-		print("Got DISCONNECT TODO")
-		# TODO
+		connector.disconnect_cube()
 	else:
 		print("Unknown event 0x%X" % event_type, " (%d)" % event_type)
 	
@@ -135,6 +154,27 @@ func evict_move_buffer():
 func check_if_move_missed():
 	#TODO
 	pass
+
+func send_command_message(command : GanTypes.CommandType, cube_device : BleDevice, encrypter : CubeEncrypter):
+	var cmd = []
+	if command == GanTypes.CommandType.REQUEST_FACELETS:
+		cmd = [0xDD, 0x04, 0x00, 0xED, 0x00, 0x00]
+	elif command == GanTypes.CommandType.REQUEST_HARDWARE:
+		cmd = [0xDF, 0x03, 0x00, 0x00, 0x00]
+	elif command == GanTypes.CommandType.REQUEST_BATTERY:
+		cmd = [0xDD, 0x04, 0x00, 0xEF, 0x00, 0x00]
+	elif command == GanTypes.CommandType.REQUEST_RESET:
+		cmd = [0xD2, 0x0D, 0x05, 0x39, 0x77, 0x00, 0x00, 0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0x00, 0x00, 0x00]
+	else:
+		printerr("Command type not implemented: " + str(command))
+		return
+	
+	while len(cmd) < 20:
+		cmd.append(0x00)
+	
+	var encrypted_command = encrypter.encrypt(PackedByteArray(cmd))
+	
+	cube_device.write_characteristic(GanTypes.GAN_GEN4_SERVICE, GanTypes.GAN_GEN4_COMMAND_CHARACTERISTIC, encrypted_command, false)
 
 func sum(arr : Array[int]) -> int:
 	var total = 0

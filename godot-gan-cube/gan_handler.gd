@@ -27,3 +27,6 @@ func _get_bit_word(bits : String, start_bit : int, bit_length : int, little_endi
 
 func handle_state(state_msg : String, connector : CubeConnector):
 	pass
+
+func send_command_message(command : GanTypes.CommandType, cube_device : BleDevice, encrypter : CubeEncrypter):
+	pass
