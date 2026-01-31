@@ -2,6 +2,9 @@ class_name GanHandler
 extends Node
 
 var cube_state : CubeState = CubeState.new()
+var _serial = -1
+var _last_serial = -1
+var _last_local_timestamp = -1
 
 func _get_bit_word(bits : String, start_bit : int, bit_length : int, little_endian : bool = false) -> int:
 	if bit_length <= 8:
