@@ -2,13 +2,14 @@ class_name GanGen4Handler
 extends GanHandler
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
-func handle_state(state_msg : String):
+func handle_state(state_msg : String, connector : CubeConnector):
 	
 	var timestamp : int = round(Time.get_unix_time_from_system())
 	
 	var event_type = _get_bit_word(state_msg, 0, 8)
 	var data_length = _get_bit_word(state_msg, 8, 8)
 	
+	# MOVE
 	if event_type == 0x01:
 		if _last_serial == -1:
 			evict_move_buffer()
@@ -23,6 +24,7 @@ func handle_state(state_msg : String):
 		if face >= 0:
 			var move : String = ["U", "R", "F", "D", "L", "B"][face] + ["", "'"][direction]
 			
+			print(timestamp, " vs ", cube_timestamp)
 			var new_move : CubeMove = CubeMove.new(
 				face,
 				direction,
@@ -33,11 +35,14 @@ func handle_state(state_msg : String):
 			)
 			cube_state.move_buffer.append(new_move)
 			
-			print(new_move)
+			connector.on_cube_move.emit(new_move)
 		evict_move_buffer()
-		
+	
+	# MOVE HISTORY
 	elif event_type == 0xD1:
 		print("Got MOVE HISTORY TODO")
+	
+	# FACELETS
 	elif event_type == 0xED:	
 		_serial = _get_bit_word(state_msg, 16, 16, true)
 		
@@ -72,15 +77,12 @@ func handle_state(state_msg : String):
 		cube_state.eo = eo
 		cube_state.ep = ep
 		cube_state.facelets = CubeUtils.to_kociemba_facelets(cp, co, ep, eo)
-		
-		print("co: ", co)
-		print("cp: ", cp)
-		print("eo: ", eo)
-		print("ep: ", ep)
-		print("facelets: ", cube_state.facelets)
-		
+	
+	# HARDWARE EVENT
 	elif event_type >= 0xFA and event_type <= 0xFE:
 		print("Got HARDWARE EVENT TODO")
+	
+	# GYRO
 	elif event_type == 0xEC:
 		var qw = _get_bit_word(state_msg, 16, 16);
 		var qx = _get_bit_word(state_msg, 32, 16);
@@ -107,15 +109,20 @@ func handle_state(state_msg : String):
 		var vy = _get_bit_word(state_msg, 84, 4)
 		var vz = _get_bit_word(state_msg, 88, 4)
 		
+		# TODO: Confirm how to convert coordinate systems here
 		cube_state.velocity = Vector3(
 			(1 - (vx >> 3) * 2) * (vx & 0x7),
 			(1 - (vy >> 3) * 2) * (vy & 0x7),
 			(1 - (vz >> 3) * 2) * (vz & 0x7)
 		)
+	
+	# BATTERY
 	elif event_type == 0xEF:
 		print("Got BATTERY TODO")
 		var battery = _get_bit_word(state_msg, 8 + data_length * 8, 8)
 		cube_state.battery_level = battery
+	
+	# DISCONNECT
 	elif event_type == 0xEA:
 		print("Got DISCONNECT TODO")
 		# TODO

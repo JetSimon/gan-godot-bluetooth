@@ -25,5 +25,5 @@ func _get_bit_word(bits : String, start_bit : int, bit_length : int, little_endi
 		printerr("Unsupported bit length")
 		return -1
 
-func handle_state(state_msg : String):
+func handle_state(state_msg : String, connector : CubeConnector):
 	pass

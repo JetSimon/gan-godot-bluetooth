@@ -2,6 +2,7 @@ class_name CubeConnector
 extends Node
 
 signal on_cube_updated(cube_state : CubeState)
+signal on_cube_move(move : CubeMove)
 
 var encrypter : CubeEncrypter
 var bluetooth_manager: BluetoothManager
@@ -70,7 +71,7 @@ func _on_notified(id : String, data : PackedByteArray):
 	if id == GanTypes.GAN_GEN4_STATE_CHARACTERISTIC:
 		var raw_state = encrypter.decrypt(data)
 		var state_msg = packed_byte_array_to_bits(raw_state)
-		gan_handler.handle_state(state_msg)
+		gan_handler.handle_state(state_msg, self)
 		on_cube_updated.emit(gan_handler.cube_state)
 	
 func _on_connection_failed():
