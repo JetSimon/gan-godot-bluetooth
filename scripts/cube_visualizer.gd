@@ -41,4 +41,3 @@ func _on_cube_updated(cube_state : CubeState):
 	
 	for i in range(len(cube_state.facelets)):
 		facelets[i].get_surface_override_material(0).albedo_color = FACE_COLOR_MAP[cube_state.facelets[i]]
-		

@@ -24,7 +24,6 @@ func handle_state(state_msg : String, connector : CubeConnector):
 		if face >= 0:
 			var move : String = ["U", "R", "F", "D", "L", "B"][face] + ["", "'"][direction]
 			
-			print(timestamp, " vs ", cube_timestamp)
 			var new_move : CubeMove = CubeMove.new(
 				face,
 				direction,

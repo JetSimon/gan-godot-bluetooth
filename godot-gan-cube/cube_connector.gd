@@ -3,11 +3,14 @@ extends Node
 
 signal on_cube_updated(cube_state : CubeState)
 signal on_cube_move(move : CubeMove)
+signal on_cube_solved()
 
 var encrypter : CubeEncrypter
 var bluetooth_manager: BluetoothManager
 var cube_device : BleDevice = null
 var gan_handler : GanHandler
+
+var _prev_is_solved : bool = false
 
 func _ready() -> void:
 	gan_handler = GanGen4Handler.new()
@@ -73,6 +76,11 @@ func _on_notified(id : String, data : PackedByteArray):
 		var state_msg = packed_byte_array_to_bits(raw_state)
 		gan_handler.handle_state(state_msg, self)
 		on_cube_updated.emit(gan_handler.cube_state)
+		
+		var is_solved = gan_handler.cube_state.is_solved()
+		if is_solved and _prev_is_solved != is_solved:
+			on_cube_solved.emit()
+		_prev_is_solved = is_solved
 	
 func _on_connection_failed():
 	print("Connection failed!")

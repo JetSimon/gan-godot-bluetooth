@@ -1,5 +1,7 @@
 class_name GanTypes
 
+static var SOLVED_STATE = ["U", "U", "U", "U", "U", "U", "U", "U", "U", "R", "R", "R", "R", "R", "R", "R", "R", "R", "F", "F", "F", "F", "F", "F", "F", "F", "F", "D", "D", "D", "D", "D", "D", "D", "D", "D", "L", "L", "L", "L", "L", "L", "L", "L", "L", "B", "B", "B", "B", "B", "B", "B", "B", "B"]
+
 # GAN Gen2 protocol BLE service
 static var GAN_GEN2_SERVICE : String = "6e400001-b5a3-f393-e0a9-e50e24dc4179";
 # GAN Gen2 protocol BLE command characteristic
