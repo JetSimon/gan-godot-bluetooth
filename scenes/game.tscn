@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://bs52ypljo5dxd"]
 
 [ext_resource type="Script" uid="uid://dsv3tvrpargpf" path="res://godot-gan-cube/cube_connector.gd" id="1_uwrxv"]
+[ext_resource type="Script" uid="uid://b2cld3lrwprv" path="res://scripts/cube_holder.gd" id="2_iywne"]
 [ext_resource type="Script" uid="uid://dej117yqnm34o" path="res://scripts/cube_visualizer.gd" id="2_yqjtg"]
 [ext_resource type="Script" uid="uid://cqvusiils07a5" path="res://scripts/move_list.gd" id="3_lnu2h"]
 [ext_resource type="Script" uid="uid://bjf63drw8iicf" path="res://scripts/cube_state_label.gd" id="4_lbhrr"]
@@ -36,6 +37,8 @@ script = ExtResource("1_uwrxv")
 
 [node name="CubeHolder" type="Node3D" parent="." unique_id=1928932473]
 transform = Transform3D(0.66262007, 0, 0.7489557, 0, 1, 0, -0.7489557, 0, 0.66262007, 0, 0, 0)
+script = ExtResource("2_iywne")
+rotate_speed = 30.0
 
 [node name="Cube" type="MeshInstance3D" parent="CubeHolder" unique_id=122411494 node_paths=PackedStringArray("conn", "faces")]
 mesh = SubResource("BoxMesh_lnu2h")

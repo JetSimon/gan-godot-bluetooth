@@ -71,6 +71,7 @@ func _on_services_discovered(services : Array):
 	cube_device.subscribe_characteristic(GanTypes.GAN_GEN4_SERVICE, GanTypes.GAN_GEN4_STATE_CHARACTERISTIC)
 	
 	gan_handler.send_command_message(GanTypes.CommandType.REQUEST_HARDWARE, cube_device, encrypter)
+	await get_tree().create_timer(1).timeout
 	gan_handler.send_command_message(GanTypes.CommandType.REQUEST_BATTERY, cube_device, encrypter)
 
 func _on_notified(id : String, data : PackedByteArray):

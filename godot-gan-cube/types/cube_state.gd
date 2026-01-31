@@ -32,4 +32,14 @@ func _to_string() -> String:
 	info_string += "HARDWARE VERSION: " + hardware_version + "\n"
 	info_string += "BATTERY: " + str(battery_level) + "/100\n"
 	
+	var rot = rotation.get_euler()
+	rot.x = rad_to_deg(rot.x)
+	rot.y = rad_to_deg(rot.y)
+	rot.z = rad_to_deg(rot.z)
+	
+	info_string += "\nORI: " + str(rot) + " degrees\n"
+	info_string += "VEL: " + str(velocity) + "\n"
+	
+	info_string += "\nSOLVED: " + str(is_solved()) + "\n"
+	
 	return info_string

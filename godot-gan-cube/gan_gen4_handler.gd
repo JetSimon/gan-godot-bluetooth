@@ -130,11 +130,13 @@ func handle_state(state_msg : String, connector : CubeConnector):
 		var vz = _get_bit_word(state_msg, 88, 4)
 		
 		# TODO: Confirm how to convert coordinate systems here
-		cube_state.velocity = Vector3(
+		var cube_vel = Vector3(
 			(1 - (vx >> 3) * 2) * (vx & 0x7),
 			(1 - (vy >> 3) * 2) * (vy & 0x7),
 			(1 - (vz >> 3) * 2) * (vz & 0x7)
 		)
+		
+		cube_state.velocity = Vector3(cube_vel.x, cube_vel.z, -cube_vel.y)
 	
 	# BATTERY
 	elif event_type == 0xEF:
