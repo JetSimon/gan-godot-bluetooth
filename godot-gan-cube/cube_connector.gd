@@ -13,6 +13,9 @@ var gan_handler : GanHandler
 
 var _prev_is_solved : bool = false
 
+@export
+var find_cube_after_init : bool = true
+
 func _ready() -> void:
 	bluetooth_manager = BluetoothManager.new()
 	add_child(bluetooth_manager)
@@ -26,7 +29,9 @@ func _ready() -> void:
 
 func _on_initialized(success: bool, error: String):
 	if success:
-		bluetooth_manager.start_scan(10.0)
+		print("Bluetooth initialized!")
+		if find_cube_after_init:
+			try_to_find_cube()
 	else:
 		printerr("Error initializing bluetooth: ", error)
 
@@ -36,12 +41,12 @@ func _on_device_found(info: Dictionary):
 		print("Cube found")
 		print(info)
 		bluetooth_manager.stop_scan()
-		connect_to_target(info.get("address"))
+		_connect_to_target(info.get("address"))
 
 func _on_scan_done():
 	print("Scan complete")
 
-func connect_to_target(address: String):
+func _connect_to_target(address: String):
 	print("Trying to connect now")
 	cube_device = bluetooth_manager.connect_device(address)
 	if cube_device:
@@ -156,3 +161,6 @@ func send_command(command : GanTypes.CommandType) -> void:
 		printerr("Cannot send command if cube not connected")
 		return
 	gan_handler.send_command_message(command, cube_device, encrypter)
+
+func try_to_find_cube() -> void:
+	bluetooth_manager.start_scan(10.0)

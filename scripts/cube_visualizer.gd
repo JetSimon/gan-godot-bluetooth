@@ -30,7 +30,6 @@ func _ready() -> void:
 
 func _on_cube_updated(cube_state : CubeState):
 	rotation = cube_state.rotation.get_euler()
-	position += cube_state.velocity
 	
 	if cube_state.facelets.is_empty():
 		return
