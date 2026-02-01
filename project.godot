@@ -10,7 +10,8 @@ config_version=5
 
 [application]
 
-config/name="cube-wizard"
+config/name="bluetooth-gan-cube-godot"
+config/description="Use a bluetooth GAN cube as a controller in godot!"
 run/main_scene="uid://bs52ypljo5dxd"
 config/features=PackedStringArray("4.6", "GL Compatibility")
 config/icon="res://icon.svg"
