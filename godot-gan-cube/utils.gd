@@ -42,3 +42,30 @@ static func to_kociemba_facelets(cp : Array[int], co : Array[int], ep : Array[in
 			facelets[EDGE_FACELET_MAP[i][(p + eo[i]) % 2]] = faces[~~(EDGE_FACELET_MAP[ep[i]][p] / 9)];
 	
 	return facelets
+
+static func sum(arr : Array[int]) -> int:
+	var total : int = 0
+	for n in arr:
+		total += n
+	return total
+
+static func num_to_quat_component(n : int) -> float:
+	return (1 - (n >> 15) * 2) * (n & 0x7FFF) / float(0x7FFF)
+
+static func num_to_velocity_component(n : int) -> float:
+	return (1 - (n >> 3) * 2.0) * (n & 0x7)
+
+static func cube_quat_to_godot_quat(quat : Quaternion) -> Quaternion:
+	return Quaternion(
+		quat.x,
+		quat.z,
+		-quat.y,
+		quat.w
+	)
+
+static func cube_vector_to_godot_vector(vec : Vector3) -> Vector3:
+	return Vector3(
+		vec.x,
+		vec.z,
+		-vec.y
+	)

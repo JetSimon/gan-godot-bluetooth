@@ -1,18 +1,18 @@
 class_name GanGen4Handler
 extends GanHandler
 
-# Called every frame. 'delta' is the elapsed time since the previous frame.
+func _ready() -> void:
+	cube_state.gyro_supported = true
+
 func handle_state(state_msg : String, connector : CubeConnector):
 	
-	var timestamp : int = round(Time.get_unix_time_from_system())
-	
+	var timestamp : float = Time.get_unix_time_from_system()
 	var event_type = _get_bit_word(state_msg, 0, 8)
 	var data_length = _get_bit_word(state_msg, 8, 8)
 	
 	# MOVE
 	if event_type == 0x01:
 		if _last_serial == -1:
-			evict_move_buffer()
 			return
 		
 		var cube_timestamp = _get_bit_word(state_msg, 16, 32, true)
@@ -32,23 +32,24 @@ func handle_state(state_msg : String, connector : CubeConnector):
 				timestamp,
 				cube_timestamp
 			)
-			cube_state.move_buffer.append(new_move)
-			
+
 			connector.on_cube_move.emit(new_move)
-		evict_move_buffer()
 	
 	# MOVE HISTORY
 	elif event_type == 0xD1:
 		print("Got MOVE HISTORY TODO")
+		# TODO look through move history and insert missing moves?
 	
 	# FACELETS
 	elif event_type == 0xED:	
 		_serial = _get_bit_word(state_msg, 16, 16, true)
 		
+		# TODO: For when we hook up missing move logic
 		if _last_serial != -1:
 			# Is 500 really the amount we want here?
 			if _last_local_timestamp != -1 and timestamp - _last_local_timestamp > 500:
-				check_if_move_missed()
+				pass
+				#check_if_move_missed()
 		else:
 			_last_serial = _serial
 		
@@ -61,15 +62,15 @@ func handle_state(state_msg : String, connector : CubeConnector):
 		for i in range(7):
 			cp.append(_get_bit_word(state_msg, 32 + i * 3, 3));
 			co.append(_get_bit_word(state_msg,53 + i * 2, 2));
-		cp.append(28 - sum(cp))
-		co.append((3 - (sum(co) % 3)) % 3)
+		cp.append(28 - CubeUtils.sum(cp))
+		co.append((3 - (CubeUtils.sum(co) % 3)) % 3)
 		
 		# Edges
 		for i in range(11):
 			ep.append(_get_bit_word(state_msg, 69 + i * 4, 4));
 			eo.append(_get_bit_word(state_msg, 113 + i, 1));
-		ep.append(66 - sum(ep));
-		eo.append((2 - (sum(eo) % 2)) % 2);
+		ep.append(66 - CubeUtils.sum(ep));
+		eo.append((2 - (CubeUtils.sum(eo) % 2)) % 2);
 		
 		cube_state.co = co
 		cube_state.cp = cp
@@ -109,34 +110,26 @@ func handle_state(state_msg : String, connector : CubeConnector):
 		var qy = _get_bit_word(state_msg, 48, 16);
 		var qz = _get_bit_word(state_msg, 64, 16);
 		
-		var rot_denom : float = float(0x7FFF)
-		
 		var cube_quat = Quaternion(
-			(1 - (qx >> 15) * 2) * (qx & 0x7FFF) / rot_denom,
-			(1 - (qy >> 15) * 2) * (qy & 0x7FFF) / rot_denom,
-			(1 - (qz >> 15) * 2) * (qz & 0x7FFF) / rot_denom,
-			(1 - (qw >> 15) * 2) * (qw & 0x7FFF) / rot_denom
+			CubeUtils.num_to_quat_component(qx),
+			CubeUtils.num_to_quat_component(qy),
+			CubeUtils.num_to_quat_component(qz),
+			CubeUtils.num_to_quat_component(qw),
 		)
 		
-		cube_state.rotation = Quaternion(
-			cube_quat.x,
-			cube_quat.z,
-			-cube_quat.y,
-			cube_quat.w
-		)
+		cube_state.rotation = CubeUtils.cube_quat_to_godot_quat(cube_quat)
 		
 		var vx = _get_bit_word(state_msg, 80, 4)
 		var vy = _get_bit_word(state_msg, 84, 4)
 		var vz = _get_bit_word(state_msg, 88, 4)
 		
-		# TODO: Confirm how to convert coordinate systems here
 		var cube_vel = Vector3(
-			(1 - (vx >> 3) * 2) * (vx & 0x7),
-			(1 - (vy >> 3) * 2) * (vy & 0x7),
-			(1 - (vz >> 3) * 2) * (vz & 0x7)
+			CubeUtils.num_to_velocity_component(vx),
+			CubeUtils.num_to_velocity_component(vy),
+			CubeUtils.num_to_velocity_component(vz)
 		)
 		
-		cube_state.velocity = Vector3(cube_vel.x, cube_vel.z, -cube_vel.y)
+		cube_state.velocity = CubeUtils.cube_vector_to_godot_vector(cube_vel)
 	
 	# BATTERY
 	elif event_type == 0xEF:
@@ -148,14 +141,6 @@ func handle_state(state_msg : String, connector : CubeConnector):
 		connector.disconnect_cube()
 	else:
 		print("Unknown event 0x%X" % event_type, " (%d)" % event_type)
-	
-func evict_move_buffer():
-	#TODO
-	pass
-	
-func check_if_move_missed():
-	#TODO
-	pass
 
 func send_command_message(command : GanTypes.CommandType, cube_device : BleDevice, encrypter : CubeEncrypter):
 	var cmd = []
@@ -178,8 +163,11 @@ func send_command_message(command : GanTypes.CommandType, cube_device : BleDevic
 	
 	cube_device.write_characteristic(GanTypes.GAN_GEN4_SERVICE, GanTypes.GAN_GEN4_COMMAND_CHARACTERISTIC, encrypted_command, false)
 
-func sum(arr : Array[int]) -> int:
-	var total = 0
-	for n in arr:
-		total += n
-	return total
+func get_service_uuid() -> String:
+	return GanTypes.GAN_GEN4_SERVICE
+
+func get_state_char_uuid() -> String:
+	return GanTypes.GAN_GEN4_STATE_CHARACTERISTIC
+	
+func get_command_char_uuid() -> String:
+	return GanTypes.GAN_GEN4_COMMAND_CHARACTERISTIC

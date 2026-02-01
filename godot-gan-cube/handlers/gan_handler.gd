@@ -30,3 +30,12 @@ func handle_state(state_msg : String, connector : CubeConnector):
 
 func send_command_message(command : GanTypes.CommandType, cube_device : BleDevice, encrypter : CubeEncrypter):
 	pass
+	
+func get_service_uuid() -> String:
+	return ""
+
+func get_state_char_uuid() -> String:
+	return ""
+	
+func get_command_char_uuid() -> String:
+	return ""
